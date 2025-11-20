@@ -8,7 +8,7 @@ export default function Index() {
   const limitedData = offers.slice(0, 7);
 
   const renderItem = ({ item }: { item: Item }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: item.color }]}>
       <Text style={styles.cardTitle}>{item.title}</Text>
     </View>
   );
@@ -34,7 +34,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   card: {
-    backgroundColor: "#1e1e1e",
     padding: 16,
     borderRadius: 12,
     marginBottom: 12,
