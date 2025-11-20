@@ -1,6 +1,6 @@
-import { Item } from "../type";
+import { ItemOffers } from "../type";
 
-export const offers: Item[] = [
+export const offers: ItemOffers[] = [
     { id: "1", title: "Super Sale", color: "#D33B0D", image: require("../assets/images/offers/package.png") },
     { id: "2", title: "Weekend Bonus", color: "#DF5A0C", image: require("../assets/images/offers/weekend.png") },
     { id: "3", title: "Flash Sale Spesial", color: "#084137", image: require("../assets/images/offers/discount.png") },

@@ -2,12 +2,12 @@ import React from "react";
 import { View, Text, FlatList, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { offers } from "../../data/offers";
-import { Item } from "../../type";
+import { ItemOffers } from "../../type";
 
 export default function Index() {
   const limitedData = offers.slice(0, 7);
 
-  const renderItem = ({ item, index }: { item: Item; index: number }) => {
+  const renderItem = ({ item, index }: { item: ItemOffers; index: number }) => {
     const isEven = index % 2 === 0;
 
     return (
