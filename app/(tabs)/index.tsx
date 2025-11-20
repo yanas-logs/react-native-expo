@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import { View, Text, FlatList, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { offers } from "../../data/offers";
 import { Item } from "../../type";
@@ -7,11 +7,29 @@ import { Item } from "../../type";
 export default function Index() {
   const limitedData = offers.slice(0, 7);
 
-  const renderItem = ({ item }: { item: Item }) => (
-    <View style={[styles.card, { backgroundColor: item.color }]}>
-      <Text style={styles.cardTitle}>{item.title}</Text>
-    </View>
-  );
+  const renderItem = ({ item, index }: { item: Item; index: number }) => {
+    const isEven = index % 2 === 0;
+
+    return (
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: item.color,
+            flexDirection: isEven ? "row" : "row-reverse",
+          },
+        ]}
+      >
+        {/* TEXT */}
+        <View style={styles.cardContent}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+        </View>
+
+        {/* IMAGE */}
+        <Image source={item.image} style={styles.cardImage} />
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -33,6 +51,7 @@ const styles = StyleSheet.create({
   listContainer: {
     padding: 16,
   },
+
   card: {
     padding: 16,
     borderRadius: 12,
@@ -41,10 +60,28 @@ const styles = StyleSheet.create({
     borderColor: "#333",
     height: 200,
     width: "100%",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
+
+  cardContent: {
+    flex: 1,
+    paddingRight: 12,
+    paddingLeft: 12,
+    justifyContent: "center",
+  },
+
   cardTitle: {
     color: "#fff",
-    fontSize: 18,
+    fontSize: 35,
     fontWeight: "600",
+    textAlign: "center",
+  },
+
+  cardImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 8,
+    resizeMode: "contain",
   },
 });
