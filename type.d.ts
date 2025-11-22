@@ -13,3 +13,13 @@ export type ItemProduct = {
   image: any;
 };
 
+export type CartItem = {
+  id: string;
+  title: string;
+  price: string;
+  description: string;
+  image: any;
+  qty: number;
+};
+
+

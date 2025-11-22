@@ -1,11 +1,13 @@
 import { router, useLocalSearchParams } from "expo-router";
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { products } from "../../../data/products";
+import { useCartStore } from "../../../store/cartStore";
 
 export default function ProductDetail() {
     const { id } = useLocalSearchParams();
 
-    // search by id
+    const addToCart = useCartStore((state) => state.addToCart);
+
     const product = products.find((item) => item.id === id);
 
     if (!product) {
@@ -27,15 +29,13 @@ export default function ProductDetail() {
             </View>
 
             <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-                <Image
-                    source={product.image}
-                    style={styles.image}
-                    resizeMode="contain"
+                <Image 
+                source={product.image} 
+                style={styles.image} 
+                resizeMode="contain" 
                 />
-
                 <Text style={styles.title}>{product.title}</Text>
                 <Text style={styles.price}>{product.price}</Text>
-
                 <Text style={styles.description}>
                     {product.description || "No description available."}
                 </Text>
@@ -47,7 +47,13 @@ export default function ProductDetail() {
                     <Text style={styles.favoriteText}>♡ Favorite</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.addCartBtn}>
+                <TouchableOpacity
+                    style={styles.addCartBtn}
+                    onPress={() => {
+                        addToCart(product);
+                        alert("Item added to cart!");
+                    }}
+                >
                     <Text style={styles.addCartText}>Add to Cart</Text>
                 </TouchableOpacity>
             </View>
