@@ -7,7 +7,7 @@ import { products } from "../../data/products";
 const Search = () => {
   const renderItem = ({ item }: any) => (
     <TouchableOpacity style={styles.card}>
-      <Image source={item.image} style={styles.image} />
+      <Image source={item.image} style={styles.image} resizeMode="contain" />
 
       <Text style={styles.productName}>{item.title}</Text>
       <Text style={styles.price}>{item.price}</Text>
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 10,
     marginBottom: 10,
-    resizeMode: "contain",
+    // resizeMode: "contain",
   },
   productName: {
     fontSize: 14,

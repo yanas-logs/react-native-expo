@@ -26,7 +26,7 @@ export default function Index() {
         </View>
 
         {/* IMAGE */}
-        <Image source={item.image} style={styles.cardImage} />
+        <Image source={item.image} style={styles.cardImage} resizeMode="contain" />
       </View>
     );
   };
@@ -82,6 +82,6 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 8,
-    resizeMode: "contain",
+    // resizeMode: "contain",
   },
 });
