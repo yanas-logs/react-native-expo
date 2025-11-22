@@ -58,9 +58,10 @@ const styles = StyleSheet.create({
     width: "48%",
     borderRadius: 12,
     padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    // shadowColor: "#000",
+    // shadowOpacity: 0.1,
+    // shadowRadius: 8,
+    boxShadow: "0px 4px 8px rgba(0,0,0,0.1)",
     elevation: 3,
   },
   image: {
