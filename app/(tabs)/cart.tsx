@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   qtyBtn: {
     width: 28,
     height: 28,
-    backgroundColor: "#fff",
+    backgroundColor: "transparent",
     borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
