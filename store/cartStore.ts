@@ -19,9 +19,7 @@ export const useCartStore = create<CartState>((set) => ({
       if (existing) {
         return {
           cart: state.cart.map((item) =>
-            item.id === product.id
-              ? { ...item, qty: item.qty + 1 }
-              : item
+            item.id === product.id ? { ...item, qty: item.qty + 1 } : item,
           ),
         };
       }
@@ -41,16 +39,16 @@ export const useCartStore = create<CartState>((set) => ({
       const existing = state.cart.find((item) => item.id === id);
       if (!existing) return state;
 
-      // Jika qty lebih dari 1, kurangi qty
+      // if qty more than 1, can decrease qty
       if (existing.qty > 1) {
         return {
           cart: state.cart.map((item) =>
-            item.id === id ? { ...item, qty: item.qty - 1 } : item
+            item.id === id ? { ...item, qty: item.qty - 1 } : item,
           ),
         };
       }
 
-      // Jika qty = 1, tetap pertahankan qty = 1 (tidak dihapus)
+      // if qty = 1, keep qty = 1 (item not removed from cart list)
       return state;
     }),
 
