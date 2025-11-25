@@ -29,7 +29,7 @@ export const products: ItemProduct[] = [
     description: "This is description product no.4",
     image: require("../assets/images/products/product4.png"),
   },
-    {
+  {
     id: "5",
     title: "Product No.5",
     price: "$70",
@@ -50,7 +50,7 @@ export const products: ItemProduct[] = [
     description: "This is description product no.7",
     image: require("../assets/images/products/product7.png"),
   },
-    {
+  {
     id: "8",
     title: "Product No.8",
     price: "$85",
@@ -84,5 +84,5 @@ export const products: ItemProduct[] = [
     price: "$140",
     description: "This is description product no.12",
     image: require("../assets/images/products/product12.png"),
-  }
+  },
 ];
