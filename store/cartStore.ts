@@ -5,6 +5,7 @@ type CartState = {
   cart: CartItem[];
   addToCart: (product: ItemProduct) => void;
   removeFromCart: (id: string) => void;
+  decreaseQty: (id: string) => void;
   clearCart: () => void;
 };
 
@@ -34,6 +35,24 @@ export const useCartStore = create<CartState>((set) => ({
     set((state) => ({
       cart: state.cart.filter((item) => item.id !== id),
     })),
+
+  decreaseQty: (id: string) =>
+    set((state) => {
+      const existing = state.cart.find((item) => item.id === id);
+      if (!existing) return state;
+
+      // Jika qty lebih dari 1, kurangi qty
+      if (existing.qty > 1) {
+        return {
+          cart: state.cart.map((item) =>
+            item.id === id ? { ...item, qty: item.qty - 1 } : item
+          ),
+        };
+      }
+
+      // Jika qty = 1, tetap pertahankan qty = 1 (tidak dihapus)
+      return state;
+    }),
 
   clearCart: () => set({ cart: [] }),
 }));
