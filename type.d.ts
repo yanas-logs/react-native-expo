@@ -21,5 +21,3 @@ export type CartItem = {
   image: any;
   qty: number;
 };
-
-
