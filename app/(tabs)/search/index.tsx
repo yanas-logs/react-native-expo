@@ -1,18 +1,24 @@
 import { Link } from "expo-router";
 import React from "react";
-import { FlatList, Image, StyleSheet, Text, TouchableOpacity } from "react-native";
+import {
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { products } from "../../../data/products";
 
 const Search = () => {
   const renderItem = ({ item }: any) => (
     <Link href={`/(tabs)/search/${item.id}`} asChild>
-    <TouchableOpacity style={styles.card}>
-      <Image source={item.image} style={styles.image} resizeMode="contain" />
-      <Text style={styles.productName}>{item.title}</Text>
-      <Text style={styles.price}>{item.price}</Text>
-    </TouchableOpacity>
-  </Link>
+      <TouchableOpacity style={styles.card}>
+        <Image source={item.image} style={styles.image} resizeMode="contain" />
+        <Text style={styles.productName}>{item.title}</Text>
+        <Text style={styles.price}>{item.price}</Text>
+      </TouchableOpacity>
+    </Link>
   );
 
   return (
