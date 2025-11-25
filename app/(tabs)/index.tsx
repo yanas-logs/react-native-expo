@@ -26,7 +26,11 @@ export default function Index() {
         </View>
 
         {/* IMAGE */}
-        <Image source={item.image} style={styles.cardImage} resizeMode="contain" />
+        <Image
+          source={item.image}
+          style={styles.cardImage}
+          resizeMode="contain"
+        />
       </View>
     );
   };
