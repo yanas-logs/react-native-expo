@@ -1,6 +1,9 @@
+import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
+import { useState } from "react";
 import {
   Image,
+  Modal,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,10 +15,13 @@ import { useCartStore } from "../../../store/cartStore";
 
 export default function ProductDetail() {
   const { id } = useLocalSearchParams();
-
   const addToCart = useCartStore((state) => state.addToCart);
-
   const product = products.find((item) => item.id === id);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const [isFavorite, setIsFavorite] = useState(false);
 
   if (!product) {
     return (
@@ -25,14 +31,35 @@ export default function ProductDetail() {
     );
   }
 
+  // Function for handle OK
+  const handleConfirmAdd = () => {
+    addToCart(product);
+    setShowSuccess(true);
+
+    // Auto close after 2s
+    setTimeout(() => {
+      setModalVisible(false);
+      setShowSuccess(false);
+    }, 2000);
+  };
+
+  // Function for handle Cencel
+  const handleCancel = () => {
+    setModalVisible(false);
+    setShowSuccess(false);
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: "#fff" }}>
-      {/* HEADER BACK */}
+      {/* HEADER BacK */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>←</Text>
+        <TouchableOpacity
+          onPress={() => router.push("/(tabs)/search")}
+          style={styles.backBtn}
+        >
+          {/* <Ionicons name="arrow-back" size={24} color="#111" /> */}
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Product Detail</Text>
+        <Text style={styles.headerTitle}></Text>
       </View>
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -50,20 +77,78 @@ export default function ProductDetail() {
 
       {/* BUTTON AREA */}
       <View style={styles.bottomActions}>
-        <TouchableOpacity style={styles.favoriteBtn}>
-          <Text style={styles.favoriteText}>♡ Favorite</Text>
+        <TouchableOpacity
+          style={styles.favoriteBtn}
+          onPress={() => setIsFavorite(!isFavorite)}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Ionicons
+              name={isFavorite ? "heart" : "heart-outline"}
+              size={18}
+              color="#ff6b81"
+            />
+            <Text style={styles.favoriteText}>Favorite</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.addCartBtn}
-          onPress={() => {
-            addToCart(product);
-            alert("Item added to cart!");
-          }}
+          onPress={() => setModalVisible(true)}
         >
           <Text style={styles.addCartText}>Add to Cart</Text>
         </TouchableOpacity>
       </View>
+
+      {/* MODAL WITH TRANSFORM STATE */}
+      <Modal
+        transparent
+        visible={modalVisible}
+        animationType="fade"
+        onRequestClose={() => {
+          setModalVisible(false);
+          setShowSuccess(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {!showSuccess ? (
+              // === CONFIRMATION STATE ===
+              <>
+                <Ionicons name="cart" size={60} color="#4CAF50" />
+                <Text style={styles.modalTitle}>Add to Cart?</Text>
+                <Text style={styles.modalMessage}>
+                  Do you want to add this item to your cart?
+                </Text>
+
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.cancelBtn}
+                    onPress={handleCancel}
+                  >
+                    <Text style={styles.cancelBtnText}>Cancel</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.confirmBtn}
+                    onPress={handleConfirmAdd}
+                  >
+                    <Text style={styles.confirmBtnText}>OK</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              // === SUCCESS STATE ===
+              <>
+                <Ionicons name="checkmark-circle" size={80} color="#4CAF50" />
+                <Text style={styles.modalTitle}>Success!</Text>
+                <Text style={styles.modalMessage}>
+                  {product.title} has been added to your cart
+                </Text>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -82,17 +167,14 @@ const styles = StyleSheet.create({
   backBtn: {
     padding: 6,
     paddingRight: 16,
-  },
-  backText: {
-    fontSize: 24,
-    fontWeight: "700",
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#111",
   },
-
   container: {
     flex: 1,
     backgroundColor: "#fff",
@@ -129,7 +211,6 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
 
-  /* Bottom Action Buttons */
   bottomActions: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -153,9 +234,10 @@ const styles = StyleSheet.create({
     color: "#ff6b81",
     fontWeight: "600",
     fontSize: 14,
+    marginRight: 2,
   },
   addCartBtn: {
-    flex: 1.3,
+    flex: 1,
     backgroundColor: "#4CAF50",
     paddingVertical: 12,
     borderRadius: 10,
@@ -166,5 +248,62 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "700",
     fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 30,
+    alignItems: "center",
+    width: "85%",
+    maxWidth: 400,
+    minHeight: 220, // Minimum height to prevent "crossing" during transition
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#111",
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  modalMessage: {
+    fontSize: 15,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 24,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    width: "100%",
+    gap: 12,
+  },
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+  },
+  cancelBtnText: {
+    color: "#666",
+    fontWeight: "600",
+    fontSize: 15,
+  },
+  confirmBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    backgroundColor: "#4CAF50",
+  },
+  confirmBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 15,
   },
 });
