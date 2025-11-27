@@ -30,7 +30,7 @@ const TabsLayout = () => {
           height: Platform.select({
             ios: 70 + (insets.bottom || 0),
             android: 75,
-            web: 70,
+            web: 90,
           }),
         },
 
