@@ -32,18 +32,18 @@ const TabsLayout = () => {
             android: 75,
             web: 90,
           }),
+
+          elevation: 10,
+
+          ...(Platform.OS === "web"
+            ? { boxShadow: "0px -4px 10px rgba(0, 0, 0, 0.15)" }
+            : {
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: -4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 10,
+              }),
         },
-
-        elevation: 10,
-
-        ...(Platform.OS === "web"
-          ? { boxShadow: "0px -4px 10px rgba(0, 0, 0, 0.15)" }
-          : {
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: -4 },
-              shadowOpacity: 0.15,
-              shadowRadius: 10,
-            }),
 
         tabBarLabelStyle: {
           marginTop: 3,
