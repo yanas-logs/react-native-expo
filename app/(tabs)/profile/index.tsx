@@ -1,26 +1,40 @@
-import { StyleSheet, View, Text } from "react-native";
-import React from "react";
+// app/(tabs)/profile/index.tsx
+import { View, Text, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 
-const profile = () => {
+export default function Profile() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Profile Screen</Text>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Ionicons name="person-circle-outline" size={100} color="#ccc" />
+        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.subtitle}>Coming Soon</Text>
+      </View>
+    </SafeAreaView>
   );
-};
-
-export default profile;
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
+    backgroundColor: "#f8f8f8",
+  },
+  content: {
+    flex: 1,
     justifyContent: "center",
-    padding: 16,
+    alignItems: "center",
+    padding: 20,
   },
   title: {
-    color: "#000000ff",
-    fontSize: 20,
-    fontWeight: "bold",
+    fontSize: 24,
+    fontWeight: "700",
+    marginTop: 16,
+    color: "#111",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    marginTop: 8,
   },
 });
