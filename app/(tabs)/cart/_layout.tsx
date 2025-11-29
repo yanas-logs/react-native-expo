@@ -20,7 +20,16 @@ const _layout = () => {
       <Stack.Screen
         name="index"
         options={{
-          title: "Cart", //  Custom title
+          title: "Products", //  Custom title
+          headerShown: true,
+        }}
+      />
+
+      {/* Screen for checkout.tsx (checkout) */}
+      <Stack.Screen
+        name="checkout"
+        options={{
+          title: "Checkout", //  Custom title
           headerShown: true,
         }}
       />

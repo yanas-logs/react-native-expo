@@ -11,6 +11,7 @@ import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCartStore } from "../../../store/cartStore";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 const Cart = () => {
   const cart = useCartStore((state) => state.cart);
@@ -115,7 +116,10 @@ const Cart = () => {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.checkoutBtn}>
+        <TouchableOpacity
+          style={styles.checkoutBtn}
+          onPress={() => router.push("/(tabs)/cart/checkout")} // Navigate ke checkout
+        >
           <Text style={styles.checkoutText}>Checkout</Text>
         </TouchableOpacity>
       </View>
