@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,16 +8,22 @@ import {
   ScrollView,
   Alert,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCartStore } from "../../../store/cartStore";
+import { useAuthStore } from "../../../store/authStore";
 
 export default function Checkout() {
   const cart = useCartStore((state) => state.cart);
   const clearCart = useCartStore((state) => state.clearCart);
+
+  // Get auth state dan actions
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const logout = useAuthStore((state) => state.logout); // Import logout
 
   const [formData, setFormData] = useState({
     name: "",
@@ -25,6 +31,35 @@ export default function Checkout() {
     address: "",
     notes: "",
   });
+
+  const [isChecking, setIsChecking] = useState(true);
+
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      setIsChecking(true);
+
+      // Delay transition
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      if (!isAuthenticated) {
+        console.log("Not authenticated, redirecting to login...");
+        router.push("/(auth)/login");
+      } else if (user) {
+        // Auto-fill form with user data
+        setFormData({
+          name: user.name,
+          phone: user.phone,
+          address: user.address || "",
+          notes: "",
+        });
+      }
+
+      setIsChecking(false);
+    };
+
+    checkAuth();
+  }, [isAuthenticated, user]); // Add dependencies
 
   // Calculate total
   const totalPrice = cart.reduce((total, item) => {
@@ -34,6 +69,21 @@ export default function Checkout() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData({ ...formData, [field]: value });
+  };
+
+  // handleLogout outside handleCheckout
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          await logout(); // Call async logout
+          router.replace("/(tabs)/cart");
+        },
+      },
+    ]);
   };
 
   const handleCheckout = () => {
@@ -67,7 +117,7 @@ ${orderItems}
     const encodedMessage = encodeURIComponent(message);
 
     // Owner's WhatsApp number
-    const ownerWhatsApp = "1281234567890";
+    const ownerWhatsApp = "4201234567890";
 
     // WhatsApp URL
     const whatsappUrl = `https://wa.me/${ownerWhatsApp}?text=${encodedMessage}`;
@@ -75,9 +125,17 @@ ${orderItems}
     // Open WhatsApp
     if (Platform.OS === "web") {
       window.open(whatsappUrl, "_blank");
+      Alert.alert("Order Sent!", "Your order has been sent via WhatsApp", [
+        {
+          text: "OK",
+          onPress: () => {
+            clearCart();
+            router.push("/(tabs)/index");
+          },
+        },
+      ]);
     } else {
-      // For mobile, you'll need to use Linking
-      // Linking.openURL(whatsappUrl);
+      // For mobile (will need Linking API in production)
       Alert.alert("Order Placed!", "Your order will be sent via WhatsApp", [
         {
           text: "OK",
@@ -90,12 +148,48 @@ ${orderItems}
     }
   };
 
+  // Show loading while checking auth
+  if (isChecking) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#a00000ff" />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // If not authenticated, show placeholder (redirect handled by useEffect)
+  if (!isAuthenticated) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Ionicons name="lock-closed-outline" size={80} color="#ccc" />
+          <Text style={styles.loadingText}>Authentication Required</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
       >
+        {/* User Info Banner */}
+        <View style={styles.userBanner}>
+          <Ionicons name="person-circle" size={50} color="#a00000ff" />
+          <View style={styles.userInfo}>
+            <Text style={styles.userName}>{user?.name}</Text>
+            <Text style={styles.userEmail}>{user?.email}</Text>
+          </View>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Text style={styles.logoutBtn}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Order Summary */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Order Summary</Text>
@@ -110,14 +204,14 @@ ${orderItems}
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total:</Text>
             <Text style={styles.totalPrice}>
-              $ {totalPrice.toLocaleString("id-ID")}
+              Rp {totalPrice.toLocaleString("id-ID")}
             </Text>
           </View>
         </View>
 
         {/* Customer Details Form */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Customer Details</Text>
+          <Text style={styles.sectionTitle}>Delivery Details</Text>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>
@@ -137,7 +231,7 @@ ${orderItems}
             </Text>
             <TextInput
               style={styles.input}
-              placeholder="12xxxxxxxxxx"
+              placeholder="081234567890"
               value={formData.phone}
               onChangeText={(text) => handleInputChange("phone", text)}
               keyboardType="phone-pad"
@@ -175,7 +269,7 @@ ${orderItems}
         <View style={styles.infoBox}>
           <Ionicons name="information-circle" size={20} color="#2196F3" />
           <Text style={styles.infoText}>
-            Order will be sent via account. Pay after confirmation.
+            Order will be sent via message. Pay after confirmation.
           </Text>
         </View>
       </ScrollView>
@@ -194,13 +288,56 @@ ${orderItems}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f8f8",
+    backgroundColor: "#008000",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 32,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#666",
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
     paddingBottom: 100,
+  },
+  userBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 16,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  userInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  userName: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#111",
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 13,
+    color: "#666",
+  },
+  logoutButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  logoutBtn: {
+    color: "#FF3B30",
+    fontSize: 14,
+    fontWeight: "600",
   },
   section: {
     backgroundColor: "#fff",
