@@ -21,3 +21,23 @@ export type CartItem = {
   image: any;
   qty: number;
 };
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address?: string;
+};
+
+export type RegisterData = {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+};
+
+export type LoginCredentials = {
+  email: string;
+  password: string;
+};
