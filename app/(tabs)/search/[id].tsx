@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { formatRupiah } from "../../../utils/format";
 import { products } from "../../../data/products";
 import { useCartStore } from "../../../store/cartStore";
 
@@ -69,7 +70,7 @@ export default function ProductDetail() {
           resizeMode="contain"
         />
         <Text style={styles.title}>{product.title}</Text>
-        <Text style={styles.price}>{product.price}</Text>
+        <Text style={styles.price}>{formatRupiah(product.price)}</Text>
         <Text style={styles.description}>
           {product.description || "No description available."}
         </Text>

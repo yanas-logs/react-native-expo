@@ -1,284 +1,258 @@
+// app/(tabs)/cart/checkout.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
+  ScrollView,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   Alert,
   Platform,
-  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useCartStore } from "../../../store/cartStore";
+import { formatRupiah } from "../../../utils/format";
 import { useAuthStore } from "../../../store/authStore";
+import { useCartStore } from "../../../store/cartStore";
+import { useOrderStore } from "../../../store/orderStore";
 
 export default function Checkout() {
+  const { user, isAuthenticated } = useAuthStore();
   const cart = useCartStore((state) => state.cart);
   const clearCart = useCartStore((state) => state.clearCart);
 
-  // Get auth state dan actions
-  const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const logout = useAuthStore((state) => state.logout); // Import logout
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cod"); // cod, transfer
+  const [loading, setLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    phone: "",
-    address: "",
-    notes: "",
-  });
-
-  const [isChecking, setIsChecking] = useState(true);
-
-  // Check authentication on mount
+  // Redirect jika belum login
   useEffect(() => {
-    const checkAuth = async () => {
-      setIsChecking(true);
+    if (!isAuthenticated) {
+      router.replace("/(auth)/login");
+    }
+  }, [isAuthenticated]);
 
-      // Delay transition
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      if (!isAuthenticated) {
-        console.log("Not authenticated, redirecting to login...");
-        router.push("/(auth)/login");
-      } else if (user) {
-        // Auto-fill form with user data
-        setFormData({
-          name: user.name,
-          phone: user.phone,
-          address: user.address || "",
-          notes: "",
-        });
-      }
-
-      setIsChecking(false);
-    };
-
-    checkAuth();
-  }, [isAuthenticated, user]); // Add dependencies
+  // Redirect jika cart kosong
+  useEffect(() => {
+    if (cart.length === 0) {
+      Alert.alert("Cart is empty", "Please add items to cart first", [
+        { text: "OK", onPress: () => router.replace("/(tabs)/cart") },
+      ]);
+    }
+  }, [cart]);
 
   // Calculate total
   const totalPrice = cart.reduce((total, item) => {
-    const price = parseFloat(item.price.replace(/[^0-9.-]+/g, ""));
+    const price = Number(item.price);
     return total + price * item.qty;
   }, 0);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
-  };
+  const shippingCost = 100;
+  const finalTotal = totalPrice + shippingCost;
 
-  // handleLogout outside handleCheckout
-  const handleLogout = () => {
-    Alert.alert("Logout", "Are you sure you want to logout?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Logout",
-        style: "destructive",
-        onPress: async () => {
-          await logout(); // Call async logout
-          router.replace("/(tabs)/cart");
-        },
-      },
-    ]);
-  };
-
-  const handleCheckout = () => {
-    // Validation
-    if (!formData.name || !formData.phone || !formData.address) {
-      Alert.alert("Error", "Please fill all required fields");
+  const handlePlaceOrder = () => {
+    if (!address || !city || !postalCode) {
+      Alert.alert("Error", "Please fill all shipping information");
       return;
     }
 
-    // Format order for WhatsApp
-    const orderItems = cart
-      .map((item) => `• ${item.title} (x${item.qty}) - ${item.price}`)
-      .join("\n");
+    setLoading(true);
 
-    const message = `
-🛒 *NEW ORDER*
+    // Simulate order placement
+    setTimeout(() => {
+      // Tambahkan order ke store
+      const newOrder = {
+        id: Date.now().toString(),
+        items: cart, // pakai state cart yang ada
+        status: "On Process",
+        total: finalTotal, // total yang dihitung
+        date: new Date().toISOString(),
+      };
+      useOrderStore.getState().addOrder(newOrder);
 
-*Customer Details:*
-Name: ${formData.name}
-Phone: ${formData.phone}
-Address: ${formData.address}
-${formData.notes ? `Notes: ${formData.notes}` : ""}
+      // Clear cart setelah order
+      clearCart();
 
-*Order Items:*
-${orderItems}
+      setLoading(false);
 
-*Total: Rp ${totalPrice.toLocaleString("id-ID")}*
-    `.trim();
-
-    // Encode message for URL
-    const encodedMessage = encodeURIComponent(message);
-
-    // Owner's WhatsApp number
-    const ownerWhatsApp = "4201234567890";
-
-    // WhatsApp URL
-    const whatsappUrl = `https://wa.me/${ownerWhatsApp}?text=${encodedMessage}`;
-
-    // Open WhatsApp
-    if (Platform.OS === "web") {
-      window.open(whatsappUrl, "_blank");
-      Alert.alert("Order Sent!", "Your order has been sent via WhatsApp", [
-        {
-          text: "OK",
-          onPress: () => {
-            clearCart();
-            router.push("/(tabs)/index");
+      // Tampilkan alert & redirect ke order history
+      Alert.alert(
+        "Order Placed!",
+        `Your order has been placed successfully.\n\nOrder ID: ORD${newOrder.id}`,
+        [
+          {
+            text: "OK",
+            onPress: () => router.replace("/profile/order_history"),
           },
-        },
-      ]);
-    } else {
-      // For mobile (will need Linking API in production)
-      Alert.alert("Order Placed!", "Your order will be sent via WhatsApp", [
-        {
-          text: "OK",
-          onPress: () => {
-            clearCart();
-            router.push("/(tabs)/index");
-          },
-        },
-      ]);
-    }
+        ],
+      );
+    }, 1500);
   };
 
-  // Show loading while checking auth
-  if (isChecking) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#a00000ff" />
-          <Text style={styles.loadingText}>Loading...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // If not authenticated, show placeholder (redirect handled by useEffect)
   if (!isAuthenticated) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Ionicons name="lock-closed-outline" size={80} color="#ccc" />
-          <Text style={styles.loadingText}>Authentication Required</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return null; // Will redirect in useEffect
   }
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="#111" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Checkout</Text>
+        <View style={{ width: 24 }} />
+      </View>
+
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        {/* User Info Banner */}
-        <View style={styles.userBanner}>
-          <Ionicons name="person-circle" size={50} color="#a00000ff" />
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.name}</Text>
-            <Text style={styles.userEmail}>{user?.email}</Text>
+        {/* User Info */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Contact Information</Text>
+          <View style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <Ionicons name="person-outline" size={20} color="#666" />
+              <Text style={styles.infoText}>{user?.name}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Ionicons name="mail-outline" size={20} color="#666" />
+              <Text style={styles.infoText}>{user?.email}</Text>
+            </View>
+            {user?.phone && (
+              <View style={styles.infoRow}>
+                <Ionicons name="call-outline" size={20} color="#666" />
+                <Text style={styles.infoText}>{user.phone}</Text>
+              </View>
+            )}
           </View>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <Text style={styles.logoutBtn}>Logout</Text>
+        </View>
+
+        {/* Shipping Address */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Shipping Address</Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Street Address"
+            value={address}
+            onChangeText={setAddress}
+            placeholderTextColor="#999"
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="City"
+            value={city}
+            onChangeText={setCity}
+            placeholderTextColor="#999"
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Postal Code"
+            value={postalCode}
+            onChangeText={setPostalCode}
+            keyboardType="numeric"
+            placeholderTextColor="#999"
+          />
+        </View>
+
+        {/* Payment Method */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Payment Method</Text>
+
+          {/*
+          <TouchableOpacity
+            style={[
+              styles.paymentOption,
+              paymentMethod === "cod" && styles.paymentOptionActive,
+            ]}
+            onPress={() => setPaymentMethod("cod")}
+          >
+            
+            <View style={styles.paymentOptionContent}>
+              <Ionicons name="cash-outline" size={24} color="#111" />
+              <View style={styles.paymentOptionText}>
+                <Text style={styles.paymentOptionTitle}>Cash on Delivery</Text>
+                <Text style={styles.paymentOptionSubtitle}>
+                  Pay when you receive
+                </Text>
+              </View>
+            </View>
+            {paymentMethod === "cod" && (
+              <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+            )}
+            
+          </TouchableOpacity>
+          */}
+
+          <TouchableOpacity
+            style={[
+              styles.paymentOption,
+              paymentMethod === "transfer" && styles.paymentOptionActive,
+            ]}
+            onPress={() => setPaymentMethod("transfer")}
+          >
+            <View style={styles.paymentOptionContent}>
+              <Ionicons name="card-outline" size={24} color="#111" />
+              <View style={styles.paymentOptionText}>
+                <Text style={styles.paymentOptionTitle}>Bank Transfer</Text>
+                <Text style={styles.paymentOptionSubtitle}>
+                  Pay via bank transfer
+                </Text>
+              </View>
+            </View>
+            {paymentMethod === "transfer" && (
+              <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+            )}
           </TouchableOpacity>
         </View>
 
         {/* Order Summary */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Order Summary</Text>
-          {cart.map((item) => (
-            <View key={item.id} style={styles.summaryItem}>
-              <Text style={styles.itemName}>
-                {item.title} (x{item.qty})
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal</Text>
+              <Text style={styles.summaryValue}>
+                {formatRupiah(totalPrice)}
               </Text>
-              <Text style={styles.itemPrice}>{item.price}</Text>
             </View>
-          ))}
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total:</Text>
-            <Text style={styles.totalPrice}>
-              Rp {totalPrice.toLocaleString("id-ID")}
-            </Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Shipping</Text>
+              <Text style={styles.summaryValue}>
+                {formatRupiah(shippingCost)}
+              </Text>
+            </View>
+            <View style={styles.summaryDivider} />
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabelTotal}>Total</Text>
+              <Text style={styles.summaryValueTotal}>
+                {formatRupiah(finalTotal)}
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Customer Details Form */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Delivery Details</Text>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Full Name <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your name"
-              value={formData.name}
-              onChangeText={(text) => handleInputChange("name", text)}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Phone Number <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="081234567890"
-              value={formData.phone}
-              onChangeText={(text) => handleInputChange("phone", text)}
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>
-              Delivery Address <Text style={styles.required}>*</Text>
-            </Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Enter full address"
-              value={formData.address}
-              onChangeText={(text) => handleInputChange("address", text)}
-              multiline
-              numberOfLines={4}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Notes (Optional)</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Any special requests?"
-              value={formData.notes}
-              onChangeText={(text) => handleInputChange("notes", text)}
-              multiline
-              numberOfLines={3}
-            />
-          </View>
-        </View>
-
-        {/* Payment Info */}
-        <View style={styles.infoBox}>
-          <Ionicons name="information-circle" size={20} color="#2196F3" />
-          <Text style={styles.infoText}>
-            Order will be sent via message. Pay after confirmation.
-          </Text>
-        </View>
+        <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Bottom Button */}
-      <View style={styles.bottomButton}>
-        <TouchableOpacity style={styles.checkoutBtn} onPress={handleCheckout}>
-          <MaterialIcons name="payments" size={20} color="#fff" />
-          <Text style={styles.checkoutBtnText}>Process to Checkout</Text>
+      {/* Place Order Button */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.placeOrderBtn}
+          onPress={handlePlaceOrder}
+          disabled={loading}
+        >
+          <Text style={styles.placeOrderText}>
+            {loading ? "Processing..." : "Place Order"}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -288,143 +262,145 @@ ${orderItems}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#008000",
+    backgroundColor: "#f8f9fa",
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
+  header: {
+    flexDirection: "row",
     alignItems: "center",
-    padding: 32,
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: "#666",
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#111",
   },
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 100,
-  },
-  userBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 16,
-    marginBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  userInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  userName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#111",
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 13,
-    color: "#666",
-  },
-  logoutButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  logoutBtn: {
-    color: "#FF3B30",
-    fontSize: 14,
-    fontWeight: "600",
-  },
   section: {
-    backgroundColor: "#fff",
-    padding: 16,
-    marginBottom: 12,
+    paddingHorizontal: 16,
+    paddingTop: 20,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#111",
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  summaryItem: {
+  infoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.05)" }
+      : {
+          shadowColor: "#000",
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 2,
+        }),
+  },
+  infoRow: {
     flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  infoText: {
+    fontSize: 15,
+    color: "#333",
+    marginLeft: 12,
+  },
+  input: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    color: "#111",
+    marginBottom: 12,
+  },
+  paymentOption: {
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    backgroundColor: "#fff",
+    borderWidth: 2,
+    borderColor: "#e0e0e0",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
   },
-  itemName: {
-    flex: 1,
-    fontSize: 14,
-    color: "#555",
+  paymentOptionActive: {
+    borderColor: "#4CAF50",
   },
-  itemPrice: {
-    fontSize: 14,
+  paymentOptionContent: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  paymentOptionText: {
+    marginLeft: 12,
+  },
+  paymentOptionTitle: {
+    fontSize: 16,
     fontWeight: "600",
     color: "#111",
+    marginBottom: 2,
   },
-  totalRow: {
+  paymentOptionSubtitle: {
+    fontSize: 13,
+    color: "#666",
+  },
+  summaryCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.05)" }
+      : {
+          shadowColor: "#000",
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          shadowOffset: { width: 0, height: 2 },
+          elevation: 2,
+        }),
+  },
+  summaryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingTop: 12,
-    marginTop: 8,
-    borderTopWidth: 2,
-    borderTopColor: "#eee",
+    marginBottom: 12,
   },
-  totalLabel: {
+  summaryLabel: {
+    fontSize: 15,
+    color: "#666",
+  },
+  summaryValue: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: "#111",
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: "#e0e0e0",
+    marginVertical: 8,
+  },
+  summaryLabelTotal: {
     fontSize: 18,
     fontWeight: "700",
     color: "#111",
   },
-  totalPrice: {
+  summaryValueTotal: {
     fontSize: 20,
     fontWeight: "700",
     color: "#4CAF50",
   },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  required: {
-    color: "#FF3B30",
-  },
-  input: {
-    backgroundColor: "#f5f5f5",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 15,
-    color: "#111",
-  },
-  textArea: {
-    height: 80,
-    textAlignVertical: "top",
-  },
-  infoBox: {
-    flexDirection: "row",
-    backgroundColor: "#E3F2FD",
-    padding: 12,
-    marginHorizontal: 16,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  infoText: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 13,
-    color: "#1976D2",
-  },
-  bottomButton: {
+  footer: {
     position: "absolute",
     bottom: 0,
     left: 0,
@@ -433,17 +409,23 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: "#eee",
+    ...(Platform.OS === "web"
+      ? { boxShadow: "0px -2px 8px rgba(0, 0, 0, 0.1)" }
+      : {
+          shadowColor: "#000",
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: -2 },
+          elevation: 5,
+        }),
   },
-  checkoutBtn: {
-    backgroundColor: "#25D366",
-    flexDirection: "row",
+  placeOrderBtn: {
+    backgroundColor: "#4CAF50",
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
-    borderRadius: 10,
-    gap: 8,
   },
-  checkoutBtnText: {
+  placeOrderText: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "700",

@@ -8,6 +8,7 @@ import {
   Text,
   TouchableOpacity,
 } from "react-native";
+import { formatRupiah } from "../../../utils/format";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { products } from "../../../data/products";
 
@@ -17,7 +18,8 @@ const Search = () => {
       <TouchableOpacity style={styles.card}>
         <Image source={item.image} style={styles.image} resizeMode="contain" />
         <Text style={styles.productName}>{item.title}</Text>
-        <Text style={styles.price}>{item.price}</Text>
+
+        <Text style={styles.price}>{formatRupiah(item.price)}</Text>
       </TouchableOpacity>
     </Link>
   );
@@ -69,12 +71,12 @@ const styles = StyleSheet.create({
     ...(Platform.OS === "web"
       ? { boxShadow: "0px 4px 8px rgba(0,0,0,0.1)" }
       : {
-        shadowColor: "#000",
-        shadowOpacity: 0.1,
-        shadowRadius: 8,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 3,
-      }),
+          shadowColor: "#000",
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 3,
+        }),
   },
   image: {
     width: "100%",

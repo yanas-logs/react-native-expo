@@ -8,7 +8,7 @@ export type ItemOffers = {
 export type ItemProduct = {
   id: string;
   title: string;
-  price: string;
+  price: number;
   description: string;
   image: any;
 };
@@ -16,7 +16,7 @@ export type ItemProduct = {
 export type CartItem = {
   id: string;
   title: string;
-  price: string;
+  price: number;
   description: string;
   image: any;
   qty: number;
@@ -41,3 +41,16 @@ export type LoginCredentials = {
   email: string;
   password: string;
 };
+
+export type Order = {
+  id: string;
+  items: CartItem[];
+  status: "On Process" | "On-Transit" | "Out for Delivery" | "Delivered";
+  total: number;
+  date: string;
+};
+
+export interface Currency {
+  value: number;
+  currency: "IDR" | "USD" | "JPY";
+}

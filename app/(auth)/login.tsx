@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+// app/(auth)/login.tsx
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,15 +17,49 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
 
+// Google Sign-In
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+
+WebBrowser.maybeCompleteAuthSession();
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const login = useAuthStore((state) => state.login);
-  const loginWithGoogle = useAuthStore((state) => state.loginWithGoogle);
+  const { login, loginWithGoogleCredential, resetPassword } = useAuthStore();
 
+  // Google Auth Request
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID,
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB,
+    expoClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB, // For Expo Go
+  });
+
+  // Handle Google Sign-In Response
+  useEffect(() => {
+    if (response?.type === "success") {
+      const { id_token, access_token } = response.params;
+
+      (async () => {
+        const ok = await loginWithGoogleCredential(
+          id_token ?? null,
+          access_token ?? null,
+        );
+        if (ok) {
+          // Redirect ke checkout setelah Google login
+          router.replace("/(tabs)/cart/checkout");
+        } else {
+          Alert.alert("Error", "Google login failed");
+        }
+      })();
+    }
+  }, [response]);
+
+  // Handle Email/Password Login
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Error", "Please enter email and password");
@@ -32,25 +67,29 @@ export default function Login() {
     }
 
     setLoading(true);
-    const success = await login(email, password);
+    const success = await login(email, password, true); // dev test dummy user
     setLoading(false);
 
     if (success) {
-      router.back();
+      // Redirect ke checkout setelah login
+      router.replace("/(tabs)/cart/checkout");
     } else {
       Alert.alert("Error", "Invalid email or password");
     }
   };
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    const success = await loginWithGoogle();
-    setLoading(false);
+  // Handle Forgot Password
+  const handleForgot = async () => {
+    if (!email) {
+      Alert.alert("Error", "Please enter your email to reset password");
+      return;
+    }
 
-    if (success) {
-      router.back();
+    const res = await resetPassword(email);
+    if (res.ok) {
+      Alert.alert("Success", "Password reset email sent. Check your inbox.");
     } else {
-      Alert.alert("Error", "Google login failed");
+      Alert.alert("Error", res.message || "Failed to send reset email");
     }
   };
 
@@ -86,7 +125,7 @@ export default function Login() {
 
                 {/* Email */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Email or Phone</Text>
+                  <Text style={styles.label}>Email</Text>
                   <View style={styles.inputContainer}>
                     <Ionicons
                       name="mail-outline"
@@ -138,7 +177,10 @@ export default function Login() {
                 </View>
 
                 {/* Forgot Password */}
-                <TouchableOpacity style={styles.forgotPassword}>
+                <TouchableOpacity
+                  style={styles.forgotPassword}
+                  onPress={handleForgot}
+                >
                   <Text style={styles.forgotPasswordText}>
                     Forgot password?
                   </Text>
@@ -168,9 +210,8 @@ export default function Login() {
                 {/* Google Button */}
                 <TouchableOpacity
                   style={styles.googleBtn}
-                  onPress={handleGoogleLogin}
-                  disabled={loading}
-                  activeOpacity={0.7}
+                  onPress={() => promptAsync()}
+                  disabled={!request}
                 >
                   <Ionicons name="logo-google" size={20} color="#DB4437" />
                   <Text style={styles.googleBtnText}>Google</Text>
@@ -198,7 +239,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Dark overlay
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -240,7 +281,7 @@ const styles = StyleSheet.create({
   },
   titleSection: {
     marginTop: 12,
-    marginBottom: 28,
+    marginBottom: 20,
     alignItems: "center",
   },
   modalTitle: {
@@ -258,7 +299,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   label: {
     fontSize: 14,
@@ -302,7 +343,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 5,
     height: 52,
     justifyContent: "center",
   },
@@ -336,8 +377,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#e0e0e0",
     backgroundColor: "#fff",
-    marginBottom: 24,
-    height: 52,
+    marginBottom: 10,
+    height: 50,
     gap: 10,
   },
   googleBtnText: {

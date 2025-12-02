@@ -5,11 +5,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "reactnativeexpo",
+    "scheme": "",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": ""
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +21,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.k99.dev.reactnativeexpo"
+      "package": ""
     },
     "web": {
       "output": "static",
@@ -40,7 +41,16 @@
           }
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "experimentalLauncherActivity": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
@@ -49,7 +59,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "e0431d50-d2d1-49c5-b199-1e86abf905f6"
+        "projectId": ""
       }
     }
   }

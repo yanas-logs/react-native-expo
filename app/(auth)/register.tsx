@@ -1,3 +1,4 @@
+// app/(auth)/register.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -15,26 +16,28 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useAuthStore } from "../../store/authStore";
+import type { RegisterData } from "../../type";
 
 export default function Register() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegisterData>({
     name: "",
     email: "",
     phone: "",
     password: "",
-    confirmPassword: "",
   });
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const register = useAuthStore((state) => state.register);
+  const { register } = useAuthStore();
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof RegisterData, value: string) => {
     setFormData({ ...formData, [field]: value });
   };
 
   const handleRegister = async () => {
+    // Validation
     if (
       !formData.name ||
       !formData.email ||
@@ -45,7 +48,7 @@ export default function Register() {
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password !== confirmPassword) {
       Alert.alert("Error", "Passwords do not match");
       return;
     }
@@ -56,21 +59,20 @@ export default function Register() {
     }
 
     setLoading(true);
-    const success = await register({
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      password: formData.password,
-    });
+    const success = await register(formData);
     setLoading(false);
 
     if (success) {
-      Alert.alert("Success", "Account created successfully!", [
-        {
-          text: "OK",
-          onPress: () => router.back(), // Kembali ke checkout
-        },
-      ]);
+      Alert.alert(
+        "Success",
+        "Account created successfully! A verification email has been sent.",
+        [
+          {
+            text: "OK",
+            onPress: () => router.replace("/(tabs)/cart/checkout"),
+          },
+        ],
+      );
     } else {
       Alert.alert("Error", "Registration failed. Please try again.");
     }
@@ -106,7 +108,7 @@ export default function Register() {
                   </Text>
                 </View>
 
-                {/* Form */}
+                {/* Full Name */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>
                     Full Name <Text style={styles.required}>*</Text>
@@ -123,10 +125,12 @@ export default function Register() {
                       placeholder="Enter your full name"
                       value={formData.name}
                       onChangeText={(text) => handleInputChange("name", text)}
+                      placeholderTextColor="#999"
                     />
                   </View>
                 </View>
 
+                {/* Email */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>
                     Email <Text style={styles.required}>*</Text>
@@ -145,10 +149,12 @@ export default function Register() {
                       onChangeText={(text) => handleInputChange("email", text)}
                       keyboardType="email-address"
                       autoCapitalize="none"
+                      placeholderTextColor="#999"
                     />
                   </View>
                 </View>
 
+                {/* Phone Number */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>
                     Phone Number <Text style={styles.required}>*</Text>
@@ -166,10 +172,12 @@ export default function Register() {
                       value={formData.phone}
                       onChangeText={(text) => handleInputChange("phone", text)}
                       keyboardType="phone-pad"
+                      placeholderTextColor="#999"
                     />
                   </View>
                 </View>
 
+                {/* Password */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>
                     Password <Text style={styles.required}>*</Text>
@@ -189,6 +197,7 @@ export default function Register() {
                         handleInputChange("password", text)
                       }
                       secureTextEntry={!showPassword}
+                      placeholderTextColor="#999"
                     />
                     <TouchableOpacity
                       onPress={() => setShowPassword(!showPassword)}
@@ -203,6 +212,7 @@ export default function Register() {
                   </View>
                 </View>
 
+                {/* Confirm Password */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>
                     Confirm Password <Text style={styles.required}>*</Text>
@@ -217,11 +227,10 @@ export default function Register() {
                     <TextInput
                       style={styles.input}
                       placeholder="Confirm your password"
-                      value={formData.confirmPassword}
-                      onChangeText={(text) =>
-                        handleInputChange("confirmPassword", text)
-                      }
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
                       secureTextEntry={!showConfirmPassword}
+                      placeholderTextColor="#999"
                     />
                     <TouchableOpacity
                       onPress={() =>
@@ -295,9 +304,9 @@ const styles = StyleSheet.create({
   modalCard: {
     width: "100%",
     backgroundColor: "#fff",
-    borderRadius: 24,
+    borderRadius: 15,
     padding: 28,
-    maxHeight: "85%",
+    maxHeight: "100%",
     ...(Platform.OS === "web"
       ? { boxShadow: "0px 10px 40px rgba(0, 0, 0, 0.3)" }
       : {

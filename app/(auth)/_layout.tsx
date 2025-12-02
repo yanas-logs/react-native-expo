@@ -26,7 +26,7 @@ const AuthLayout = () => {
       <Stack.Screen
         name="register"
         options={{
-          presentation: "transparentModal",
+          title: "Profile",
           animation: "slide_from_right",
           headerShown: false,
         }}

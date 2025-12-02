@@ -1,3 +1,4 @@
+// app/(tabs)/cart/index.tsx
 import {
   FlatList,
   Image,
@@ -8,8 +9,11 @@ import {
   Platform,
 } from "react-native";
 import React from "react";
+import { formatRupiah } from "../../../utils/format";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCartStore } from "../../../store/cartStore";
+import { useAuthStore } from "../../../store/authStore";
+import { useOrderStore } from "../../../store/orderStore";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
@@ -20,14 +24,27 @@ const Cart = () => {
   const decreaseQty = useCartStore((state) => state.decreaseQty);
   const clearCart = useCartStore((state) => state.clearCart);
 
+  // NEW: Get auth state
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   // Price
   const totalPrice = cart.reduce((total, item) => {
-    const price = parseFloat(item.price.replace(/[^0-9.-]+/g, ""));
-    return total + price * item.qty;
+    return total + item.price * item.qty;
   }, 0);
 
+  // NEW: Protected Checkout Handler
+  const handleCheckout = () => {
+    if (!isAuthenticated) {
+      // Jika belum login, redirect ke login
+      router.push("/(auth)/login");
+    } else {
+      // Jika sudah login, lanjut ke checkout
+      router.push("/(tabs)/cart/checkout");
+    }
+  };
+
   const renderItem = ({ item }: any) => {
-    const price = parseFloat(item.price.replace(/[^0-9.-]+/g, ""));
+    const price = Number(item.price);
     const subtotal = price * item.qty;
 
     return (
@@ -38,9 +55,9 @@ const Cart = () => {
           <Text style={styles.itemTitle} numberOfLines={2}>
             {item.title}
           </Text>
-          <Text style={styles.itemPrice}>{item.price}</Text>
+          <Text style={styles.itemPrice}>{formatRupiah(item.price)}</Text>
           <Text style={styles.subtotal}>
-            Subtotal: ${subtotal.toLocaleString("id-ID")}
+            Subtotal: {formatRupiah(subtotal)}
           </Text>
         </View>
 
@@ -111,16 +128,17 @@ const Cart = () => {
       <View style={styles.footer}>
         <View style={styles.totalContainer}>
           <Text style={styles.totalLabel}>Total:</Text>
-          <Text style={styles.totalPrice}>
-            ${totalPrice.toLocaleString("id-ID")}
-          </Text>
+          <Text style={styles.totalPrice}>{formatRupiah(totalPrice)}</Text>
         </View>
 
+        {/* UPDATED: Protected Checkout Button */}
         <TouchableOpacity
           style={styles.checkoutBtn}
-          onPress={() => router.push("/(tabs)/cart/checkout")} // Navigate ke checkout
+          onPress={handleCheckout} // NEW: Use protected handler
         >
-          <Text style={styles.checkoutText}>Checkout</Text>
+          <Text style={styles.checkoutText}>
+            {isAuthenticated ? "Checkout" : "Process to Checkout"}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -217,11 +235,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  qtyBtnText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#333",
-  },
   qtyText: {
     fontSize: 16,
     fontWeight: "700",
@@ -232,22 +245,15 @@ const styles = StyleSheet.create({
   },
   removeBtn: {
     padding: 8,
-    marginBottom: "5",
+    marginBottom: 5,
     justifyContent: "center",
     alignItems: "center",
-  },
-  removeBtnText: {
-    fontSize: 20,
   },
   emptyContainer: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 32,
-  },
-  emptyText: {
-    fontSize: 80,
-    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 20,

@@ -26,7 +26,7 @@ const _layout = () => {
       <Stack.Screen
         name="index"
         options={{
-          title: "Products", //  Custom title
+          title: "Cart", //  Custom title
           headerShown: true,
         }}
       />
@@ -36,7 +36,7 @@ const _layout = () => {
         name="checkout"
         options={{
           title: "Checkout", //  Custom title
-          headerShown: true,
+          headerShown: false,
           presentation: "modal",
         }}
       />

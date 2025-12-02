@@ -16,20 +16,12 @@ const _layout = () => {
         },
       }}
     >
-      {/* Screen for index.tsx ( profil ) */}
+      {/* Screen for index.tsx ( order_history ) */}
       <Stack.Screen
         name="index"
         options={{
-          title: "Profile", //  Custom title
-          headerShown: true,
-        }}
-      />
-
-      <Stack.Screen
-        name="sign-up"
-        options={{
-          title: "Sign Up", //  Custom title
-          headerShown: true,
+          title: "Order History", //  Custom title
+          headerShown: false,
         }}
       />
     </Stack>
