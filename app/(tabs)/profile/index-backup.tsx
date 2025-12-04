@@ -1,84 +1,44 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
-  Alert,
   ScrollView,
+  TextInput,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useAuthStore } from "../../../store/authStore";
+import { useOrderStore } from "../../../store/orderStore";
 
-// Google Sign-In
-import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
+export default function Profile() {
+  const { user, isAuthenticated, login, logout } = useAuthStore();
 
-WebBrowser.maybeCompleteAuthSession();
+  const orders = useOrderStore((state) => state.orders);
 
-export default function ProfileScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const {
-    login,
-    loginWithGoogleCredential,
-    resetPassword,
-    user,
-    isAuthenticated,
-    logout,
-  } = useAuthStore();
-
-  // Google Auth Request
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_IOS,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_ANDROID,
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB,
-    expoClientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID_WEB,
-  });
-
-  // Handle Google Sign-In Response
-  useEffect(() => {
-    if (response?.type === "success") {
-      const { id_token, access_token } = response.params;
-
-      (async () => {
-        const ok = await loginWithGoogleCredential(
-          id_token ?? null,
-          access_token ?? null,
-        );
-        if (ok) {
-          Alert.alert("Success", "Logged in with Google!");
-        } else {
-          Alert.alert("Error", "Google login failed");
-        }
-      })();
-    }
-  }, [response]);
-
-  // Handle Email/Password Login
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please enter email and password");
+      Alert.alert("Error", "Email and password are mandatory.");
       return;
     }
 
-    setLoading(true);
-    const success = await login(email, password, true);
-    setLoading(false);
-
-    if (success) {
-      Alert.alert("Success", "Login successful!");
-    } else {
-      Alert.alert("Error", "Invalid email or password");
+    try {
+      setLoading(true);
+      await login(email, password);
+    } catch (err) {
+      Alert.alert("Login Failed", "Incorrect email or password.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle Logout
   const handleLogout = async () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
       { text: "Cancel", style: "cancel" },
@@ -87,27 +47,12 @@ export default function ProfileScreen() {
         style: "destructive",
         onPress: async () => {
           await logout();
+          router.replace("/(tabs)/profile/login");
         },
       },
     ]);
   };
 
-  // Handle Forgot Password
-  const handleForgotPassword = async () => {
-    if (!email) {
-      Alert.alert("Error", "Please enter your email to reset password");
-      return;
-    }
-
-    const res = await resetPassword(email);
-    if (res.ok) {
-      Alert.alert("Success", "Password reset email sent. Check your inbox.");
-    } else {
-      Alert.alert("Error", res.message || "Failed to send reset email");
-    }
-  };
-
-  // If NOT authenticated, show login form
   if (!isAuthenticated || !user) {
     return (
       <ScrollView contentContainerStyle={styles.loginContainer}>
@@ -154,10 +99,6 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity onPress={handleForgotPassword}>
-          <Text style={styles.forgotText}>Forgot Password?</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.loginButton}
           onPress={handleLogin}
@@ -170,15 +111,11 @@ export default function ProfileScreen() {
 
         <View style={styles.dividerContainer}>
           <View style={styles.divider} />
-          <Text style={styles.dividerText}>or continue with</Text>
+          <Text style={styles.dividerText}>or continue withXXX</Text>
           <View style={styles.divider} />
         </View>
 
-        <TouchableOpacity
-          style={styles.googleButton}
-          onPress={() => promptAsync()}
-          disabled={!request}
-        >
+        <TouchableOpacity style={styles.googleButton}>
           <Ionicons name="logo-google" size={20} color="#000" />
           <Text style={styles.googleButtonText}>Google</Text>
         </TouchableOpacity>
@@ -197,67 +134,62 @@ export default function ProfileScreen() {
     );
   }
 
-  // ✅ If authenticated, show profile screen
+  // Login Mode
   return (
-    <View style={styles.container}>
-      <ScrollView>
-        {/* User Card */}
-        <View style={styles.userCard}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={40} color="#fff" />
-          </View>
-          <Text style={styles.userName}>{user.name || "User"}</Text>
-          <Text style={styles.userEmail}>{user.email}</Text>
-          {user.phone && <Text style={styles.userPhone}>{user.phone}</Text>}
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Profile</Text>
+      </View>
+
+      <View style={styles.userCard}>
+        <View style={styles.avatar}>
+          <Ionicons name="person" size={40} color="#fff" />
         </View>
+        <Text style={styles.userName}>{user.name || "User"}</Text>
+        <Text style={styles.userEmail}>{user.email}</Text>
+        {user.phone && <Text style={styles.userPhone}>{user.phone}</Text>}
+      </View>
 
-        {/* Menu Section */}
-        <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>Account</Text>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="person-outline" size={22} color="#333" />
-            <Text style={styles.menuText}>Edit Profile</Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="receipt-outline" size={22} color="#333" />
-            <Text style={styles.menuText}>Order History</Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="location-outline" size={22} color="#333" />
-            <Text style={styles.menuText}>Addresses</Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Settings Section */}
-        <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>Settings</Text>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="notifications-outline" size={22} color="#333" />
-            <Text style={styles.menuText}>Notifications</Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="help-circle-outline" size={22} color="#333" />
-            <Text style={styles.menuText}>Help & Support</Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={22} color="#FF3B30" />
-          <Text style={styles.logoutText}>Logout</Text>
+      <View style={styles.menuSection}>
+        <Text style={styles.sectionTitle}>Account</Text>
+        <TouchableOpacity style={styles.menuItem}>
+          <Ionicons name="person-outline" size={22} color="#333" />
+          <Text style={styles.menuText}>Edit Profile</Text>
+          <Ionicons name="chevron-forward" size={20} color="#999" />
         </TouchableOpacity>
-      </ScrollView>
-    </View>
+        <TouchableOpacity style={styles.menuItem}>
+          <Ionicons name="location-outline" size={22} color="#333" />
+          <Text style={styles.menuText}>Addresses</Text>
+          <Ionicons name="chevron-forward" size={20} color="#999" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.menuSection}>
+        <Text style={styles.sectionTitle}>Orders</Text>
+
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => router.push("/profile/order_history")}
+        >
+          <Ionicons name="receipt-outline" size={22} color="#333" />
+          <Text style={styles.menuText}>Order History</Text>
+          <Ionicons name="chevron-forward" size={20} color="#999" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem}>
+          <Ionicons name="heart-outline" size={22} color="#333" />
+          <Text style={styles.menuText}>Favorites</Text>
+          <Ionicons name="chevron-forward" size={20} color="#999" />
+        </TouchableOpacity>
+      </View>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Ionicons name="log-out-outline" size={22} color="#FF3B30" />
+        <Text style={styles.logoutText}>Logout</Text>
+      </TouchableOpacity>
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
   );
 }
 
@@ -266,11 +198,10 @@ const styles = StyleSheet.create({
 
   // LOGIN STATE
   loginContainer: {
-    flexGrow: 1,
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 30,
-    paddingVertical: 40,
   },
   loginTitle: { fontSize: 22, fontWeight: "700", marginBottom: 20 },
   inputWrapper: {
@@ -293,12 +224,6 @@ const styles = StyleSheet.create({
   },
   eyeBtn: {
     padding: 4,
-  },
-  forgotText: {
-    alignSelf: "flex-end",
-    color: "#a00000ff",
-    fontSize: 14,
-    marginBottom: 16,
   },
   loginButton: {
     width: "100%",
@@ -343,6 +268,17 @@ const styles = StyleSheet.create({
   // Signup link
   signupText: { fontSize: 14, marginTop: 5, color: "#555" },
 
+  // HEADER
+  header: {
+    backgroundColor: "#fff",
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f0f0f0",
+  },
+  headerTitle: { fontSize: 28, fontWeight: "700", color: "#111" },
+
   // USER CARD
   userCard: {
     backgroundColor: "#fff",
@@ -351,10 +287,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: "center",
     elevation: 3,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   avatar: {
     width: 80,
@@ -371,12 +303,7 @@ const styles = StyleSheet.create({
 
   // MENU
   menuSection: { marginTop: 24, marginHorizontal: 20 },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 12,
-    color: "#333",
-  },
+  sectionTitle: { fontSize: 16, fontWeight: "700", marginBottom: 12 },
   menuItem: {
     flexDirection: "row",
     padding: 16,
@@ -385,12 +312,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     alignItems: "center",
     elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
   },
-  menuText: { flex: 1, marginLeft: 12, fontSize: 15, color: "#333" },
+  menuText: { flex: 1, marginLeft: 12, fontSize: 15 },
 
   // LOGOUT
   logoutButton: {
@@ -403,7 +326,6 @@ const styles = StyleSheet.create({
     borderColor: "#FF3B30",
     marginHorizontal: 20,
     marginTop: 24,
-    marginBottom: 40,
     alignItems: "center",
     gap: 8,
   },

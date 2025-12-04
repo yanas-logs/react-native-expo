@@ -1,4 +1,3 @@
-// app/(tabs)/cart/index.tsx
 import {
   FlatList,
   Image,
@@ -35,10 +34,10 @@ const Cart = () => {
   // NEW: Protected Checkout Handler
   const handleCheckout = () => {
     if (!isAuthenticated) {
-      // Jika belum login, redirect ke login
+      // if not yet login, redirect to login
       router.push("/(auth)/login");
     } else {
-      // Jika sudah login, lanjut ke checkout
+      // if already login, continue to checkout
       router.push("/(tabs)/cart/checkout");
     }
   };

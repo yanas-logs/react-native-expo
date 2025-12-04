@@ -1,4 +1,3 @@
-// app/(tabs)/cart/checkout.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -29,14 +28,14 @@ export default function Checkout() {
   const [paymentMethod, setPaymentMethod] = useState("cod"); // cod, transfer
   const [loading, setLoading] = useState(false);
 
-  // Redirect jika belum login
+  // Redirect if not login yet
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace("/(auth)/login");
     }
   }, [isAuthenticated]);
 
-  // Redirect jika cart kosong
+  // Redirect if cart empty
   useEffect(() => {
     if (cart.length === 0) {
       Alert.alert("Cart is empty", "Please add items to cart first", [
@@ -64,22 +63,22 @@ export default function Checkout() {
 
     // Simulate order placement
     setTimeout(() => {
-      // Tambahkan order ke store
+      // Add order to store
       const newOrder = {
         id: Date.now().toString(),
-        items: cart, // pakai state cart yang ada
+        items: cart, // use state cart
         status: "On Process",
-        total: finalTotal, // total yang dihitung
+        total: finalTotal, // counting total
         date: new Date().toISOString(),
       };
       useOrderStore.getState().addOrder(newOrder);
 
-      // Clear cart setelah order
+      // Clear cart after order
       clearCart();
 
       setLoading(false);
 
-      // Tampilkan alert & redirect ke order history
+      // Show alert & redirect ke order history
       Alert.alert(
         "Order Placed!",
         `Your order has been placed successfully.\n\nOrder ID: ORD${newOrder.id}`,

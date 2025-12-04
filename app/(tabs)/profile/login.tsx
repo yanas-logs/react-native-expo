@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useAuthStore } from "../../store/authStore";
+import { useAuthStore } from "../../../store/authStore";
 
 // Google Sign-In
 import * as WebBrowser from "expo-web-browser";
@@ -71,7 +71,7 @@ export default function Login() {
 
     if (success) {
       // Redirect to checkout after login
-      router.replace("/(tabs)/cart/checkout");
+      router.replace("/(tabs)/profile/profile"); // BACA INI
     } else {
       Alert.alert("Error", "Invalid email or password");
     }

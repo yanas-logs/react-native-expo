@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-const _layout = () => {
+const ProfileLayout = () => {
   return (
     <Stack
       screenOptions={{
@@ -16,19 +16,17 @@ const _layout = () => {
         },
       }}
     >
-      {/* Screen for index.tsx ( profil ) */}
       <Stack.Screen
         name="index"
         options={{
-          title: "Profile", //  Custom title
+          title: "Profile",
           headerShown: true,
         }}
       />
-
       <Stack.Screen
         name="sign-up"
         options={{
-          title: "Sign Up", //  Custom title
+          title: "Sign Up",
           headerShown: true,
         }}
       />
@@ -36,4 +34,4 @@ const _layout = () => {
   );
 };
 
-export default _layout;
+export default ProfileLayout;

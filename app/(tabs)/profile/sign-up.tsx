@@ -1,4 +1,3 @@
-// app/(auth)/signup.tsx
 import React, { useState } from "react";
 import {
   View,
@@ -23,7 +22,7 @@ export default function Signup() {
 
   const handleSignup = async () => {
     if (!name || !email || !password) {
-      Alert.alert("Error", "Semua field wajib diisi.");
+      Alert.alert("Error", "All fields are required to be filled in.");
       return;
     }
 
@@ -31,9 +30,12 @@ export default function Signup() {
       setLoading(true);
       await signup({ name, email, password });
       Alert.alert("Success", "Account created successfully.");
-      router.replace("/(tabs)/profile/index"); // redirect ke profile
+      router.replace("/(tabs)/profile/index"); // redirect to profile
     } catch (err) {
-      Alert.alert("Signup Failed", "Terjadi kesalahan saat membuat akun.");
+      Alert.alert(
+        "Signup Failed",
+        "An error occurred while creating an account.",
+      );
     } finally {
       setLoading(false);
     }
