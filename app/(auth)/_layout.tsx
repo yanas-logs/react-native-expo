@@ -12,7 +12,6 @@ const AuthLayout = () => {
       <Stack.Screen
         name="login"
         options={{
-          presentation: "transparentModal",
           headerShown: false,
           ...Platform.select({
             ios: { cardStyle: { backgroundColor: "transparent" } },
@@ -22,13 +21,14 @@ const AuthLayout = () => {
         }}
       />
 
-      {/* Register - Full Screen */}
+      {/* Register / Sign-up - Full Screen */}
       <Stack.Screen
-        name="register"
+        name="sign-up"
         options={{
-          title: "Profile",
-          animation: "slide_from_right",
           headerShown: false,
+          title: "Sign Up",
+          animation: "slide_from_right",
+          contentStyle: { backgroundColor: "#fff" },
         }}
       />
     </Stack>
