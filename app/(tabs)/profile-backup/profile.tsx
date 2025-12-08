@@ -29,7 +29,7 @@ export default function Profile() {
         style: "destructive",
         onPress: async () => {
           await logout();
-          router.replace("/(tabs)/profile/login");
+          router.replace("/(tabs)/profile/index");
         },
       },
     ]);

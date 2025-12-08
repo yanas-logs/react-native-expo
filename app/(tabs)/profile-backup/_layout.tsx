@@ -17,6 +17,13 @@ const ProfileLayout = () => {
       }}
     >
       <Stack.Screen
+        name="login"
+        options={{
+          title: "Login Bos",
+          headerShown: true,
+        }}
+      />
+      <Stack.Screen
         name="index"
         options={{
           title: "Profile",
