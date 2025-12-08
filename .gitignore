@@ -42,6 +42,8 @@ yarn-error.*
 .env.development
 .env.production
 .env.preview
+firebaseConfig.ts
+firebaseConfig.js
 
 # typescript
 *.tsbuildinfo
